@@ -59,8 +59,8 @@ def talk_to_ai(msgs: list[dict]):
 @app.route("/")
 def landing_page():
     if session.get("user_id"):
-        return render_template("index.html", user_id=session.get("user_id"))
-    return render_template("login.html")
+        return render_template("chats/index.html", user_id=session.get("user_id"))
+    return render_template("chats/login.html")
 
 
 @app.route("/login", methods=["POST"])
@@ -94,7 +94,7 @@ def signup():
             session["user_id"] = user_data["_id"]
             return "success"
 
-    return render_template("signup.html")
+    return render_template("chats/signup.html")
 
 
 @app.route("/signout")

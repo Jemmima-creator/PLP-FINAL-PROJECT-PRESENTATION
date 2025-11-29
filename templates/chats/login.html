@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Login • Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+--bg:#0b1220;
+--panel:#0f1724;
+--glass:rgba(255,255,255,0.04);
+--muted:#9aa4b2;
+--accent:#10b981;
+font-family:Inter, system-ui;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:white;height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+
+
+.card{
+width:100%;max-width:380px;background:var(--panel);padding:32px;border-radius:16px;
+box-shadow:0 0 40px rgba(0,0,0,0.3);
+display:flex;flex-direction:column;gap:22px;
+}
+
+
+.title{text-align:center;font-size:24px;font-weight:700;letter-spacing:-0.5px}
+
+
+.input-group{display:flex;flex-direction:column;gap:6px}
+.label{font-size:14px;color:var(--muted)}
+.input{
+background:transparent;border:1px solid var(--glass);padding:12px;border-radius:10px;color:white;
+caret-color:white;font-size:15px
+}
+
+
+.btn{
+width:100%;background:linear-gradient(90deg,#06b6d4,#7c3aed);padding:12px;border:none;border-radius:10px;
+font-weight:600;color:#041025;font-size:15px;cursor:pointer;margin-top:10px
+}
+
+
+.footer{text-align:center;font-size:13px;color:var(--muted);margin-top:6px}
+.footer a{color:var(--accent);text-decoration:none;font-weight:600}
+
+
+.logo{
+width:52px;height:52px;margin:0 auto;border-radius:12px;
+background:linear-gradient(135deg,#7c3aed,#06b6d4);
+}
+</style>
+</head>
+<body>
+<div class="card">
+<div class="logo"></div>
+<div class="title">Sign in</div>
+
+
+<form method="POST" action="/login">
+<div class="input-group">
+<label class="label">Email</label>
+<input class="input" name="email" type="email" placeholder="you@example.com" required />
+</div>
+
+
+<div class="input-group">
+<label class="label">Password</label>
+<input class="input" name="password" type="password" placeholder="••••••••" required />
+</div>
+
+
+<button class="btn" type="submit">Continue</button>
+</form>
+
+
+<div class="footer">
+Don't have an account? <a href="signup">Sign up</a>
+<script>
+    
+</script>
+</div>
+</div>
+</body>
+</html>

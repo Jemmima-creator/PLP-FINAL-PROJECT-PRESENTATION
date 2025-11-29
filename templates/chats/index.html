@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Football ChatBot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1220; /* page background */
+      --panel:#0f1724; /* panels */
+      --muted:#9aa4b2;
+      --accent:#10b981; /* green */
+      --glass: rgba(255,255,255,0.03);
+      --bubble-user: linear-gradient(135deg,#4f46e5,#06b6d4);
+      --bubble-assistant: #111827;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:#e6eef6}
+
+    /* layout */
+    .app{display:grid;grid-template-columns:280px 1fr;gap:18px;height:100vh;padding:18px}
+
+    /* sidebar */
+    .sidebar{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:12px;padding:16px;display:flex;flex-direction:column}
+    .brand{display:flex;align-items:center;gap:10px;padding:6px 4px}
+    .brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#06b6d4)}
+    .brand h1{font-size:16px;margin:0}
+    .new-chat{margin-top:12px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--glass);border:1px solid rgba(255,255,255,0.02);cursor:pointer;color:var(--muted);font-weight:600}
+
+    .chats{margin-top:12px;overflow:auto;padding-right:6px}
+    .chat-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;margin-bottom:8px;cursor:pointer}
+    .chat-item:hover{background:rgba(255,255,255,0.01)}
+    .chat-item .dot{width:40px;height:40px;border-radius:8px;background:#111827;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+    .chat-item .meta{flex:1}
+    .chat-item .meta .title{font-weight:600;font-size:14px}
+    .chat-item .meta .sub{font-size:12px;color:var(--muted)}
+
+    /* main panel */
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:12px;padding:12px;display:None;flex-direction:column;overflow:hidden}
+    .panel-header{display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.02)}
+    .panel-header h2{margin:0;font-size:16px}
+    .messages{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+
+    /* message bubbles */
+    .msg{max-width:75%;padding:12px 14px;border-radius:12px;line-height:1.4}
+    .msg.assistant{background:var(--bubble-assistant);align-self:flex-start;border-top-left-radius:6px}
+    .msg.user{background:var(--bubble-user);align-self:flex-end;color:white;border-top-right-radius:6px}
+    .meta-time{display:block;font-size:11px;color:var(--muted);margin-top:6px}
+
+    /* input */
+    .composer{display:flex;gap:8px;padding:12px;border-top:1px solid rgba(255,255,255,0.02);align-items:center}
+    .composer form{display:flex;gap:8px;flex:1}
+    .input{flex:1;background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px 12px;border-radius:10px;color:inherit}
+    .send{padding:10px 14px;border-radius:10px;border:none;background:linear-gradient(90deg,#06b6d4,#7c3aed);color:#041025;font-weight:700;cursor:pointer}
+
+    /* small screens */
+    @media (max-width:800px){
+      .app{grid-template-columns:1fr}
+      .sidebar{display:none}
+      .panel{display: flex;}
+    }
+
+    /* scrollbars (subtle) */
+    .chats::-webkit-scrollbar, .messages::-webkit-scrollbar{width:8px}
+    .chats::-webkit-scrollbar-thumb, .messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.03);border-radius:8px}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo"></div>
+        <h1>Chat</h1>
+      </div>
+
+      <div class="new-chat">
+        <button class="btn" id="newChatBtn">+ New chat</button>
+      </div>
+
+      <div class="chats" id="chatList">
+        
+      </div>
+
+      <div style="margin-top:auto;padding-top:12px;font-size:13px;color:var(--muted)">Switch model • Settings</div>
+    </aside>
+
+    <main class="panel" id="panel">
+      <div class="panel-header">
+        <h2 id="convTitle"></h2>
+      </div>
+
+      <div class="messages" id="messages">
+  
+      </div>
+
+      <div class="composer">
+        <form id="composerForm" >
+          <input id="promptInput" class="input" placeholder="Send a message..." autocomplete="off" />
+          <button type="submit" class="send">Send</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Basic client-side behavior to simulate chat interactions.
+    var user_id = "{{user_id}}"
+    window.currentChat = null
+    const form = document.getElementById('composerForm');
+    const input = document.getElementById('promptInput');
+    const messages = document.getElementById('messages');
+    const chatList = document.getElementById('chatList');
+    const newChatBtn = document.getElementById('newChatBtn');
+    
+    function create_chat_id_element(chat_id){
+      const item = document.createElement('div');
+      item.addEventListener("click", ()=>{
+      reload_chat(chat_id) })
+      item.className = 'chat-item';
+      var data_id = document.createAttribute("data-id")
+      data_id.value = chat_id
+      item.attributes.setNamedItem(data_id)
+      item.innerHTML = `<div class="dot">N</div><div class="meta"><div class="title">Chat ${chat_id}</div><div class="sub">Title</div></div>`;
+      chatList.prepend(item);
+    }
+    function addMessage(text, who='assistant', timeStr){
+      const node = document.createElement('div');
+      node.className = 'msg ' + who;
+      
+      node.innerHTML = text + '<span class="meta-time">' + new Date(timeStr).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + '</span>';
+      messages.appendChild(node);
+      messages.scrollTop = messages.scrollHeight;
+      return node
+    }
+    fetch("/all_chats_ids", {method:"post", headers:{"Content-Type":"application/json"}, body: JSON.stringify({"user_id":user_id})}).then((res)=>{
+      res.json().then((data)=>{
+        for(chat_id of data){
+          
+          create_chat_id_element(chat_id)
+        }
+      })
+    })
+
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const t = input.value.trim();
+      if(!t) return;
+      let timeNow = new Date()
+      addMessage(t, 'user', timeNow);
+      input.value = '';
+
+      // mock assistant reply (replace with real API call in production)
+      setTimeout(()=>{
+        fetch("/chatmessage",{ method:"post", headers:{"Content-Type":"application/json", "authorization":"Bearer {object Object}"}, body:JSON.stringify({chat_text:t, chat_id:window.currentChat,user_id:user_id, date:timeNow})}).then((res)=>{
+          res.json().then((assistant_obj)=>{
+            
+            addMessage(assistant_obj.content, 'assistant', assistant_obj.Time);
+            })
+          
+        })
+        
+      }, 600);
+    });
+    function reload_chat(chat_id){
+      
+      if (window.currentChat!=chat_id){
+      messages.innerHTML = '';
+      window.currentChat = chat_id
+
+      document.getElementById("panel").style.display = "flex"
+      document.getElementById('convTitle').textContent = `Conversation ${chat_id}`;
+      fetch("/acquire_messages",{method:"post", headers:{"Content-Type":"application/json",
+      "authorization":"Bearer {123}"
+      },body:JSON.stringify({chat_id:chat_id, user_id: user_id}) }).then((res)=>{res.json().then((chat_data)=>{
+                              if (chat_data){
+                              for (message_data of chat_data){
+                                addMessage(message_data.content, message_data.role, message_data.Time)
+                              }
+                            }})})
+      
+    }}
+    
+    newChatBtn.addEventListener('click', ()=>{
+      // simple new chat behavior: clear messages, update title
+      messages.innerHTML = '';
+      
+      fetch("/new_chat",{method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({"user_id":user_id})}).then((res)=>{
+        res.json().then((chat_id_json)=>{
+          
+          // add entry to chat list
+          create_chat_id_element(chat_id_json["chat_id"])
+          reload_chat(chat_id_json["chat_id"])
+        })
+      })
+
+      
+      
+
+      
+    });
+  </script>
+</body>
+</html>
